@@ -10,6 +10,11 @@ if [[ "$CC" == "scan-build" ]]; then
     unset CXX
 
     scan-build -o analysis --status-bugs make debug
+elif [[ "$CC" == "lint" ]]; then
+    unset CC
+    unset CXX
+
+    make lint
 else
     make debug
     make release

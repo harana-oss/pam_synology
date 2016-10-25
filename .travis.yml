@@ -16,5 +16,6 @@ compiler:
   - clang
   - gcc
   - scan-build
+  - lint
 
 script: ./.travis.sh
