@@ -7,6 +7,11 @@ Introduction
 This is a PAM module which allows the user to authenticate users against a Synology user-account
  using the PAM subsystem in *nix based systems.
 
+Status
+------
+It works, very crude and all SSL verification is disabled by default. If you want to try it, read ahead.
+Report any bugs, it can help me.
+
 Prerequisites
 -------------
 To try this module, you need the following stuff:
@@ -26,11 +31,6 @@ account sufficient pam_synology.so
 Available options
 -----------------
 The module options are listed below with default in ()s:
-
-verbose (0)
-
-    If set to 1, produces logs with detailed messages that describes what
-    PAM-MySQL is doing. May be useful for debugging.
 
 url
 
