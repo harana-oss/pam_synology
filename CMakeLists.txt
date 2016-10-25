@@ -66,9 +66,10 @@ include_directories(
 	${CMAKE_CURRENT_BINARY_DIR})
 
 set(CFILES
-	src/pam_synology.c)
+	src/pam_synology.c
+	src/stdlib_wrapper.c)
 
 add_library(${PROJECT_NAME} SHARED ${CFILES})
-target_link_libraries(${PROJECT_NAME} ${MYSQLCLIENT_LIBRARIES} ${OPENSSL_CRYPTO_LIBRARY})
+target_link_libraries(${PROJECT_NAME} ${CURL_LIBRARIES} ${ZLIB_LIBRARIES} ${OPENSSL_CRYPTO_LIBRARY})
 
 install(TARGETS ${PROJECT_NAME} DESTINATION /lib/security)

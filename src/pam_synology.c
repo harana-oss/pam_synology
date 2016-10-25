@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <syslog.h>
 #ifdef HAVE_PAM_APPL_H
 #include <pam_appl.h>
 #elif defined(HAVE_SECURITY_PAM_APPL_H)
@@ -13,6 +14,9 @@
 #include <security/pam_modules.h>
 #endif
 #include <curl/curl.h>
+#include "stdlib_wrapper.h"
+
+#define LOG_PREFIX PROJECT_NAME ": "
 
 /* expected hook */
 PAM_EXTERN int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
@@ -21,6 +25,7 @@ PAM_EXTERN int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const cha
 	(void)flags;
 	(void)argc;
 	(void)argv;
+	logmsg(LOG_INFO, "%s", LOG_PREFIX "setcred called but not implemented.");
 	return PAM_SUCCESS;
 }
 
@@ -30,6 +35,7 @@ PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const c
 	(void)flags;
 	(void)argc;
 	(void)argv;
+	logmsg(LOG_INFO, "%s", LOG_PREFIX "acct_mgmt called but not implemented.");
 	return PAM_SUCCESS;
 }
 
@@ -54,6 +60,8 @@ static const char *pam_syno_get_arg(const char *username, int argc, const char *
 	return 0;
 }
 
+static char syno_reply[1024];
+
 /**
  * Function to handle stuff from HTTP response.
  *
@@ -67,6 +75,7 @@ static size_t pam_syno_write_fn(void *buf, size_t len, size_t size, void *userda
 {
 	(void)buf;
 	(void)userdata;
+	memcpy(syno_reply, buf, size);
 	return len * size;
 }
 
@@ -74,40 +83,51 @@ static int pam_syno_get_url(const char *urlstr, const char *usernamestr, const c
 {
 	int res = -1;
 	char *userpass;
-	size_t len = strlen(usernamestr) + strlen(passwd) + 2; // : separator & trailing null
 	CURL *curl_handle = curl_easy_init();
 
-	if (!curl_handle)
-		return 0;
+	if (!curl_handle) {
+		logmsg(LOG_DEBUG, LOG_PREFIX "curl-handle fail");
+		return -1;
+	}
 
-	userpass = malloc(len);
+	userpass = malloc(256);
 
 	(void)cafile;
 
-	sprintf(userpass, "%s:%s", usernamestr, passwd);
-
-	curl_easy_setopt(curl_handle, CURLOPT_URL, urlstr);
+	snprintf(userpass, 256,
+		 "%s/webapi/auth.cgi?api=SYNO.API.Auth&version=3&method=login&account=%s&passwd=%s&session=FileStation&format=cookie",
+		 urlstr, usernamestr, passwd);
+	curl_easy_setopt(curl_handle, CURLOPT_URL, userpass);
 	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, pam_syno_write_fn);
-	curl_easy_setopt(curl_handle, CURLOPT_USERPWD, userpass);
 	curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 1); // we don't care about progress
 	curl_easy_setopt(curl_handle, CURLOPT_FAILONERROR, 1);
-	// we don't want to leave our user waiting at the login prompt forever
-	curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, 1);
 
-	// SSL needs 16k of random stuff. We'll give it some space in RAM.
+	// fixme
+	curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 0L);
+	curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYHOST, 0L);
+
 	curl_easy_setopt(curl_handle, CURLOPT_RANDOM_FILE, "/dev/urandom");
-	curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 0);
-	curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYHOST, 2);
-	curl_easy_setopt(curl_handle, CURLOPT_USE_SSL, CURLUSESSL_ALL);
+	//curl_easy_setopt(curl_handle, CURLOPT_USE_SSL, CURLUSESSL_ALL);
 
-	// synchronous, but we don't really care
+	memset(syno_reply, 0, sizeof(syno_reply));
 	res = curl_easy_perform(curl_handle);
 
-	memset(userpass, '\0', len);
+	memset(userpass, 0, 256);
 	free(userpass);
 	curl_easy_cleanup(curl_handle);
 
-	printf("Res: %d\n", res);
+	if (res == 0) {
+		size_t reply_len = strlen(syno_reply);
+
+		if (reply_len == 0)
+			res = 1;
+		else if (!strstr(syno_reply, "\"success\":true"))
+			res = 2;
+		else
+			res = 0;
+	}
+
+	logmsg(LOG_INFO, LOG_PREFIX "res: %d\n", res);
 
 	return res;
 }
@@ -129,18 +149,25 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, cons
 	const struct pam_message *pam_msg = &msg;
 
 	msg.msg_style = PAM_PROMPT_ECHO_OFF;
-	msg.msg = "Cool buddy: ";
+	msg.msg = "Synology password: ";
 
-	if (pam_get_user(pamh, &usernamestr, NULL) != PAM_SUCCESS)
+	if (pam_get_user(pamh, &usernamestr, NULL) != PAM_SUCCESS) {
+		logmsg(LOG_DEBUG, LOG_PREFIX "username error", usernamestr);
 		return PAM_AUTH_ERR;
+	}
+	logmsg(LOG_DEBUG, LOG_PREFIX "username: %s", usernamestr);
 
 	urlstr = pam_syno_get_arg("url", argc, argv);
-	if (!urlstr)
+	if (!urlstr) {
+		logmsg(LOG_DEBUG, LOG_PREFIX "urlstr error", usernamestr);
 		return PAM_AUTH_ERR;
+	}
+
+	logmsg(LOG_DEBUG, LOG_PREFIX "urlstr: %s", urlstr);
 
 	cafile = pam_syno_get_arg("cafile", argc, argv);
 	if (pam_get_item(pamh, PAM_CONV, (const void **)&pam_item) != PAM_SUCCESS || !pam_item) {
-		fprintf(stderr, "Couldn't get pam_conv\n");
+		logmsg(LOG_DEBUG, LOG_PREFIX "pam_conv failure?", usernamestr);
 		return PAM_AUTH_ERR;
 	}
 
