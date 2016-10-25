@@ -109,7 +109,7 @@ static int pam_syno_get_url(const char *urlstr, const char *usernamestr, const c
 	curl_easy_setopt(curl_handle, CURLOPT_RANDOM_FILE, "/dev/urandom");
 	//curl_easy_setopt(curl_handle, CURLOPT_USE_SSL, CURLUSESSL_ALL);
 
-	memset(syno_reply, 0, sizeof(syno_reply));
+	memset_s(syno_reply, sizeof(syno_reply), 0, sizeof(syno_reply));
 	res = curl_easy_perform(curl_handle);
 	memset_s(userpass, 256, 0, 256);
 	free(userpass);
@@ -177,7 +177,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, cons
 	if (pam_syno_get_url(urlstr, usernamestr, pam_resp[0].resp, cafile) != 0)
 		ret = PAM_AUTH_ERR;
 
-	memset(pam_resp[0].resp, 0, strlen(pam_resp[0].resp));
+	memset_s(pam_resp[0].resp, strlen(pam_resp[0].resp), 0, strlen(pam_resp[0].resp));
 	free(pam_resp);
 
 	return ret;
