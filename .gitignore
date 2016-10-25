@@ -1,3 +1,5 @@
+.checkpatch*
+build
 # Object files
 *.o
 *.ko
