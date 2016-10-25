@@ -17,7 +17,7 @@ if(${ENABLE_CODECOVERAGE} MATCHES "ON")
 	set(CMAKE_CXX_FLAGS "--coverage -fprofile-arcs -ftest-coverage")
 endif()
 
-add_cflag_if_supported("-std=gnu99")
+add_cflag_if_supported("-std=c99")
 add_cflag_if_supported("-Wall")
 add_cflag_if_supported("-Wextra")
 add_cflag_if_supported("-Wshadow")

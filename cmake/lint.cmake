@@ -49,6 +49,7 @@ function(enable_linting)
 			"--max-line-length=120"
 			"--ignore=PREFER_KERNEL_TYPES"
 			"--ignore=BIT_MACRO"
+			"--ignore=VOLATILE"
 			"--ignore=COMPLEX_MACRO"
 			"--ignore=NEW_TYPEDEFS"
 			"--ignore=MULTISTATEMENT_MACRO_USE_DO_WHILE"

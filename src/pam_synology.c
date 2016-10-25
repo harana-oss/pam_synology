@@ -111,8 +111,7 @@ static int pam_syno_get_url(const char *urlstr, const char *usernamestr, const c
 
 	memset(syno_reply, 0, sizeof(syno_reply));
 	res = curl_easy_perform(curl_handle);
-
-	memset(userpass, 0, 256);
+	memset_s(userpass, 256, 0, 256);
 	free(userpass);
 	curl_easy_cleanup(curl_handle);
 

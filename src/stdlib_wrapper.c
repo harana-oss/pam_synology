@@ -1,14 +1,30 @@
 #include <config.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <syslog.h>
 #include <stdarg.h>
 #include <string.h>
+#include <limits.h>
+#include <errno.h>
 #include "stdlib_wrapper.h"
 
 #ifndef LOG_AUTHPRIV
 #define LOG_AUTHPRIV LOG_AUTH
 #endif
+
+int memset_s(void *v, size_t smax, int c, size_t n)
+{
+	volatile unsigned char *p = v;
+
+	if (!v || smax > SIZE_MAX || n > smax)
+		return -EINVAL;
+
+	while (smax-- && n--)
+		*p++ = (unsigned char)c;
+
+	return 0;
+}
 
 void logmsg(int level, const char *format, ...)
 {
