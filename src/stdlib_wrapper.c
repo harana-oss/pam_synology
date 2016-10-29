@@ -1,9 +1,10 @@
+#define _BSD_SOURCE
 #include <config.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <syslog.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <string.h>
 #include <limits.h>
 #include <errno.h>
@@ -17,7 +18,7 @@ int memset_s(void *v, size_t smax, int c, size_t n)
 {
 	volatile unsigned char *p = v;
 
-	if (!v || smax > SIZE_MAX || n > smax)
+	if (!v || smax > n || n > smax)
 		return -EINVAL;
 
 	while (smax-- && n--)

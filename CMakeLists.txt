@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.7)
 
 project(pam_synology C)
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(PROJECT_VERSION 0.1.0)
 
 option(ENABLE_CODECOVERAGE "ENABLE_CODECOVERAGE" OFF)
