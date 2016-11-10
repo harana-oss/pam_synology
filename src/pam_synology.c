@@ -76,8 +76,7 @@ PAM_EXTERN int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const cha
 
 	if (!ctx)
 		logmsg(LOG_WARNING, "%s", LOG_PREFIX "setcred called ctx is null.");
-
-	if (ctx->verbose)
+	else if (ctx->verbose)
 		logmsg(LOG_INFO, "%s", LOG_PREFIX "setcred called but not implemented.");
 
 	return PAM_SUCCESS;
@@ -92,8 +91,7 @@ PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const c
 
 	if (!ctx)
 		logmsg(LOG_WARNING, "%s", LOG_PREFIX "acct_mgmt called ctx is null.");
-
-	if (ctx->verbose)
+	else if (ctx->verbose)
 		logmsg(LOG_INFO, "%s", LOG_PREFIX "acct_mgmt called but not implemented.");
 
 	return PAM_SUCCESS;
@@ -245,12 +243,11 @@ PAM_EXTERN int pam_sm_open_session(pam_handle_t *pamh, int flags, int argc, cons
 	(void)flags;
 	(void)argc;
 	(void)argv;
-	struct pam_synology_ctx *ctx = pam_synology_get_ctx(pamh, true);
+	struct pam_synology_ctx *ctx = pam_synology_get_ctx(pamh, false);
 
 	if (!ctx)
 		logmsg(LOG_WARNING, "%s", LOG_PREFIX "sm_open_session called ctx alloc failed.");
-
-	if (ctx->verbose)
+	else if (ctx->verbose)
 		logmsg(LOG_INFO, "%s", LOG_PREFIX "sm_open_session called but not implemented.");
 
 	return PAM_SUCCESS;
@@ -266,10 +263,8 @@ PAM_EXTERN int pam_sm_close_session(pam_handle_t *pamh, int flags, int argc, con
 
 	if (!ctx)
 		logmsg(LOG_WARNING, "%s", LOG_PREFIX "sm_close_session called ctx is null.");
-
-	if (ctx->verbose)
+	else if (ctx->verbose)
 		logmsg(LOG_INFO, "%s", LOG_PREFIX "sm_close_session called but not implemented.");
 
 	return PAM_SUCCESS;
 }
-
