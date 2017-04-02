@@ -23,9 +23,11 @@ Installation instructions
 -------------------------
 
 An example of the configuration file:
----------------------------------------------------------------
+```
 auth sufficient pam_synology.so url=https://mysynologyhostname:5001
 account sufficient pam_synology.so
+```
+
 ---------------------------------------------------------------
 
 Available options
